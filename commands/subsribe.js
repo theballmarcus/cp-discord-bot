@@ -9,16 +9,14 @@ module.exports = {
     run: async (client, message, args) => {
         
         const msg = await message.channel.send(`Subscribing....`);
-        const acceptedDays = ["monday", "tuesday", "wednesday", "thursday", "friday"]
-        console.log(args)
+        const acceptedDays = {"monday" : "1", "tuesday" : "2", "wednesday" : "3", "thursday" : "4", "friday" : "5"}
         var continueProgram = true;
         for (i in config.subscribePermissions) if(message.member.hasPermission(i)) {
             if(args.length != 1) {
                 msg.edit(module.exports.syntax);
-                console.log(args)
                 break;
             } else {
-                if (!acceptedDays.includes(args[0])) {
+                if (!(args[0] in acceptedDays)) {
                     msg.edit("Thay day isn't an accepted day. Try again with another day fx monday.")
                     continueProgram = false;
                 }
@@ -26,19 +24,15 @@ module.exports = {
                     var member = message.member;
                     var database = new functions.Database("./" + config.database);
                     database.querySQL("SELECT * FROM subscriptions", function(rows) {
-                    //console.log(rows);
                     rows.forEach((row) => {
-                        console.log(row);
-                        console.log(member.id)
                         if(member.id == row.userId) {
-                            console.log(`User name: ${member.user.tag}`)
-                            database.updateSubscription(args[0], member.user.id, member.user.tag)
+                            database.updateSubscription(acceptedDays[args[0]], member.user.id, member.user.tag)
                             continueProgram = false;
                             msg.edit("Since you already was in the database, I've just updated it for you. :)");
                         }
                     })
                     if(continueProgram) {
-                        database.addSubscription(args[0], member.user.id, member.user.tag);
+                        database.addSubscription(acceptedDays[args[0]], member.user.id, member.user.tag);
                     } 
                 });
                 break;

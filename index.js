@@ -1,7 +1,7 @@
 const Discord = require('discord.js');
 const { readdirSync } = require("fs");
 var CronJob = require('cron').CronJob;
-
+var functions = require('./functions.js')
 
 const client = new Discord.Client();
 
@@ -28,7 +28,11 @@ readdirSync("./commands/").filter(file => file.endsWith(".js")).forEach(file => 
 
 
 client.on('ready', () => {
-  console.log(`Logged in as ${client.user.tag}!`);
+    console.log(`Logged in as ${client.user.tag}!`);
+    //console.log(client);
+    createChannels() 
+    var createChannelsJob = new CronJob('0 5 * * *', function() {createChannels()}, null, true, 'Europe/Copenhagen');
+    createChannelsJob.start();
 });
 
 client.on('message', async message => {
@@ -49,3 +53,21 @@ client.on('message', async message => {
 });
 
 client.login(config.token);
+
+function createChannels() {
+    console.log("It's 5AM, checking database and creating channels.");
+    var catogorie = client.channels.cache.get(config.channelsCatogorie);
+    var guild = catogorie.guild;
+    var day = new Date().getDay();
+    var db = new functions.Database('./subscriptions.db');
+
+    db.querySQL('SELECT * FROM subscriptions', function(rows) {
+        rows.forEach(async (row) =>  {
+            if (day == row.day) {
+                curChannel = await guild.channels.create(`${row.department}`, "text")
+                console.log(curChannel)
+                curChannel.setParent(catogorie);
+            }
+        })
+    });
+}
